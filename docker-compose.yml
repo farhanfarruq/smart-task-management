@@ -1,0 +1,59 @@
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: task_db
+    environment:
+      POSTGRES_USER: taskuser
+      POSTGRES_PASSWORD: taskpass123
+      POSTGRES_DB: taskdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - task_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskuser"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: task_backend
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://taskuser:taskpass123@postgres:5432/taskdb?schema=public
+      JWT_SECRET: super_secret_jwt_key_change_in_production
+      JWT_REFRESH_SECRET: super_secret_refresh_key_change_in_production
+      OTP_EXPIRY_MINUTES: 5
+      PORT: 3000
+      NODE_ENV: production
+    networks:
+      - task_network
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: task_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:3000
+    networks:
+      - task_network
+    restart: unless-stopped
+
+networks:
+  task_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
