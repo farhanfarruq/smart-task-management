@@ -15,28 +15,32 @@ export class UserService {
         name: dto.name || dto.email.split('@')[0],
         role: dto.role || Role.USER,
       },
-      select: { id: true, email: true, name: true, role: true, createdAt: true },
+      select: { id: true, email: true, name: true, role: true, avatarUrl: true, jobTitle: true, department: true, bio: true, createdAt: true },
     });
   }
 
   async findAll() {
     return this.prisma.user.findMany({
-      select: { id: true, email: true, name: true, role: true, createdAt: true },
+      select: { id: true, email: true, name: true, role: true, avatarUrl: true, jobTitle: true, department: true, bio: true, createdAt: true },
     });
   }
 
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      select: { id: true, email: true, name: true, role: true, createdAt: true },
+      select: { id: true, email: true, name: true, role: true, avatarUrl: true, jobTitle: true, department: true, bio: true, createdAt: true },
     });
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
 
-  async updateUser(id: string, dto: UpdateUserDto, currentUserRole: Role) {
+  async updateUser(id: string, dto: UpdateUserDto, currentUserId: string, currentUserRole: Role) {
     if (currentUserRole !== Role.ADMIN && dto.role) {
       throw new ForbiddenException('Only admin can change role');
+    }
+
+    if (currentUserRole !== Role.ADMIN && id !== currentUserId) {
+      throw new ForbiddenException('You can only update your own profile');
     }
     
     const user = await this.prisma.user.findUnique({ where: { id } });
@@ -45,7 +49,7 @@ export class UserService {
     return this.prisma.user.update({
       where: { id },
       data: dto,
-      select: { id: true, email: true, name: true, role: true, updatedAt: true },
+      select: { id: true, email: true, name: true, role: true, avatarUrl: true, jobTitle: true, department: true, bio: true, updatedAt: true },
     });
   }
 

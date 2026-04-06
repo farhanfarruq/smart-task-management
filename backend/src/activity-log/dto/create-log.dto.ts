@@ -17,6 +17,14 @@ export class CreateLogDto {
   @IsNotEmpty()
   entityId: string;
 
+  @IsString()
+  @IsOptional()
+  projectId?: string;
+
+  @IsString()
+  @IsOptional()
+  taskId?: string;
+
   @IsObject()
   @IsOptional()
   details?: any;

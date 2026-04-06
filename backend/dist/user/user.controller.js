@@ -21,6 +21,9 @@ const roles_decorator_1 = require("../common/decorators/roles.decorator");
 const roles_guard_1 = require("../auth/guards/roles.guard");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const client_1 = require("@prisma/client");
+const platform_express_1 = require("@nestjs/platform-express");
+const multer_1 = require("multer");
+const path_1 = require("path");
 let UserController = class UserController {
     constructor(userService) {
         this.userService = userService;
@@ -35,10 +38,16 @@ let UserController = class UserController {
         return this.userService.findOne(id);
     }
     update(id, updateUserDto, req) {
-        return this.userService.updateUser(id, updateUserDto, req.user.role);
+        return this.userService.updateUser(id, updateUserDto, req.user.userId, req.user.role);
     }
     remove(id, req) {
         return this.userService.deleteUser(id, req.user.role);
+    }
+    async uploadAvatar(id, file, req) {
+        if (!file)
+            throw new common_1.BadRequestException('No file uploaded');
+        const avatarUrl = `/uploads/${file.filename}`;
+        return this.userService.updateUser(id, { avatarUrl }, req.user.userId, req.user.role);
     }
 };
 exports.UserController = UserController;
@@ -83,6 +92,31 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], UserController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Patch)(':id/avatar'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
+        storage: (0, multer_1.diskStorage)({
+            destination: './uploads',
+            filename: (req, file, cb) => {
+                const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+                cb(null, `avatar-${uniqueSuffix}${(0, path_1.extname)(file.originalname)}`);
+            },
+        }),
+        fileFilter: (req, file, cb) => {
+            if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+                return cb(new common_1.BadRequestException('Only image files are allowed!'), false);
+            }
+            cb(null, true);
+        },
+        limits: { fileSize: 2 * 1024 * 1024 }
+    })),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.UploadedFile)()),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "uploadAvatar", null);
 exports.UserController = UserController = __decorate([
     (0, common_1.Controller)('users'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

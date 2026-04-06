@@ -1,145 +1,273 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold">Projects</h1>
-      <button @click="showCreateModal = true" class="btn-primary">+ New Project</button>
+  <section class="space-y-6">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Projects Workspace</h1>
+        <p class="page-subtitle">Kelola delivery, anggota, deadline, dan health project dalam satu tampilan.</p>
+      </div>
+      <button @click="openCreate" class="btn-primary">Create Project</button>
     </div>
 
-    <div v-if="loading" class="flex justify-center items-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-    </div>
-    
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="project in projects" :key="project.id" class="card hover:shadow-lg transition">
-        <router-link :to="`/projects/${project.id}/tasks`">
-          <h2 class="text-xl font-semibold mb-2 text-blue-600 hover:underline">{{ project.name }}</h2>
-        </router-link>
-        <p class="text-gray-600 mb-4">{{ project.description || 'No description' }}</p>
-        <div class="flex justify-between items-center text-sm text-gray-500">
-          <span>Owner: {{ project.owner?.email || project.ownerId }}</span>
-          <span>{{ project.members?.length || 0 }} members</span>
-        </div>
-        <div class="mt-4 flex space-x-2">
-          <button @click="openInviteModal(project)" class="text-blue-600 text-sm hover:underline">Invite</button>
-          <button @click="editProject(project)" class="text-green-600 text-sm hover:underline">Edit</button>
-          <button @click="confirmDelete(project)" class="text-red-600 text-sm hover:underline">Delete</button>
+    <div class="panel">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <input v-model="search" class="field lg:max-w-sm" placeholder="Search project name or description" />
+        <div class="flex flex-wrap gap-3">
+          <select v-model="statusFilter" class="field lg:w-48">
+            <option value="">All statuses</option>
+            <option value="PLANNING">Planning</option>
+            <option value="ACTIVE">Active</option>
+            <option value="ON_HOLD">On Hold</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="ARCHIVED">Archived</option>
+          </select>
+          <select v-model="sortBy" class="field lg:w-48">
+            <option value="updated">Latest updated</option>
+            <option value="progress">Best progress</option>
+            <option value="deadline">Nearest deadline</option>
+          </select>
         </div>
       </div>
     </div>
 
-    <!-- Create/Edit Modal -->
-    <div v-if="showCreateModal || editingProject" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div class="bg-white rounded-lg p-6 w-96">
-        <h2 class="text-xl font-bold mb-4">{{ editingProject ? 'Edit Project' : 'Create Project' }}</h2>
-        <div class="space-y-4">
-          <input v-model="projectForm.name" placeholder="Project Name" class="w-full border rounded p-2" />
-          <textarea v-model="projectForm.description" placeholder="Description" class="w-full border rounded p-2"></textarea>
-          <div class="flex justify-end space-x-2">
-            <button @click="closeModal" class="btn-secondary">Cancel</button>
-            <button @click="saveProject" class="btn-primary">Save</button>
+    <div v-if="filteredProjects.length === 0" class="empty-state">Belum ada project yang cocok dengan filter ini.</div>
+    <div v-else class="grid gap-5 xl:grid-cols-2">
+      <article v-for="project in filteredProjects" :key="project.id" class="panel">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-3">
+              <span class="h-4 w-4 rounded-full" :style="{ backgroundColor: project.color }"></span>
+              <h2 class="text-xl font-semibold text-slate-950">{{ project.name }}</h2>
+            </div>
+            <p class="mt-3 text-sm leading-6 text-slate-500">{{ project.description || 'No project brief yet.' }}</p>
+          </div>
+          <span class="chip" :class="statusClass(project.status)">{{ pretty(project.status) }}</span>
+        </div>
+
+        <div class="mt-5 grid gap-4 md:grid-cols-3">
+          <div>
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Progress</p>
+            <p class="mt-2 text-2xl font-semibold text-slate-900">{{ project.progress ?? 0 }}%</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Members</p>
+            <p class="mt-2 text-2xl font-semibold text-slate-900">{{ project.members.length }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Overdue</p>
+            <p class="mt-2 text-2xl font-semibold text-rose-600">{{ project.overdueTasks ?? 0 }}</p>
           </div>
         </div>
-      </div>
+
+        <div class="mt-5 h-2 rounded-full bg-slate-100">
+          <div class="h-2 rounded-full" :style="{ width: `${project.progress ?? 0}%`, backgroundColor: project.color }"></div>
+        </div>
+
+        <div class="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+          <span>Owner: {{ project.owner?.name || project.owner?.email || project.ownerId }}</span>
+          <span>Due: {{ formatDate(project.dueDate) }}</span>
+        </div>
+
+        <div class="mt-6 flex flex-wrap gap-3">
+          <router-link :to="`/projects/${project.id}/tasks`" class="btn-primary">Open Board</router-link>
+          <button class="btn-secondary" @click="editProject(project)">Edit</button>
+          <button class="btn-secondary" @click="openInvite(project)">Invite</button>
+          <button class="btn-secondary text-rose-600" @click="confirmDelete(project)">Delete</button>
+        </div>
+      </article>
     </div>
 
-    <!-- Invite Modal -->
-    <div v-if="inviteProject" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div class="bg-white rounded-lg p-6 w-96">
-        <h2 class="text-xl font-bold mb-4">Invite User to {{ inviteProject.name }}</h2>
-        <input v-model="inviteEmail" placeholder="user@example.com" class="w-full border rounded p-2 mb-4" />
-        <div class="flex justify-end space-x-2">
-          <button @click="inviteProject = null" class="btn-secondary">Cancel</button>
-          <button @click="sendInvite" class="btn-primary">Invite</button>
+    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <div class="panel w-full max-w-2xl">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="panel-title">{{ editingProject ? 'Edit Project' : 'Create Project' }}</h2>
+            <p class="panel-subtitle">Lengkapi detail agar tim lebih mudah memantau progres.</p>
+          </div>
+          <button class="btn-secondary" @click="closeModal">Close</button>
+        </div>
+        <div class="mt-6 grid gap-4 md:grid-cols-2">
+          <input v-model="projectForm.name" class="field md:col-span-2" placeholder="Project name" />
+          <textarea v-model="projectForm.description" class="field md:col-span-2 min-h-28" placeholder="Project brief"></textarea>
+          <select v-model="projectForm.status" class="field">
+            <option value="PLANNING">Planning</option>
+            <option value="ACTIVE">Active</option>
+            <option value="ON_HOLD">On Hold</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="ARCHIVED">Archived</option>
+          </select>
+          <input v-model.number="projectForm.health" class="field" type="number" min="0" max="100" placeholder="Health 0-100" />
+          <input v-model="projectForm.startDate" class="field" type="date" />
+          <input v-model="projectForm.dueDate" class="field" type="date" />
+          <input v-model="projectForm.color" class="field" type="color" />
+          <input v-model="projectForm.icon" class="field" placeholder="Icon label" />
+        </div>
+        <div class="mt-6 flex justify-end gap-3">
+          <button class="btn-secondary" @click="closeModal">Cancel</button>
+          <button class="btn-primary" @click="saveProject">Save Project</button>
         </div>
       </div>
     </div>
-  </div>
+
+    <div v-if="inviteProject" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <div class="panel w-full max-w-lg">
+        <h2 class="panel-title">Invite team member</h2>
+        <p class="panel-subtitle">Kirim undangan ke project {{ inviteProject.name }}.</p>
+        <input v-model="inviteEmail" class="field mt-5" placeholder="teammate@example.com" />
+        <div class="mt-6 flex justify-end gap-3">
+          <button class="btn-secondary" @click="inviteProject = null">Cancel</button>
+          <button class="btn-primary" @click="sendInvite">Send Invitation</button>
+        </div>
+      </div>
+    </div>
+  </section>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useProjectStore } from '../stores/project';
-import type { Project } from '../types';
+import { computed, onMounted, ref } from 'vue';
 import { useToast } from 'vue-toastification';
+import { useProjectStore } from '../stores/project';
+import type { Project, ProjectStatus } from '../types';
 
 const projectStore = useProjectStore();
 const toast = useToast();
 const projects = ref<Project[]>([]);
-const showCreateModal = ref(false);
+const search = ref('');
+const statusFilter = ref<ProjectStatus | ''>('');
+const sortBy = ref<'updated' | 'progress' | 'deadline'>('updated');
+const showModal = ref(false);
 const editingProject = ref<Project | null>(null);
-const projectForm = ref({ name: '', description: '' });
 const inviteProject = ref<Project | null>(null);
 const inviteEmail = ref('');
-const loading = ref(true);
-
-onMounted(async () => {
-  try {
-    await projectStore.fetchProjects();
-    projects.value = projectStore.projects;
-  } catch (err: any) {
-    toast.error('Failed to load projects');
-  } finally {
-    loading.value = false;
-  }
+const projectForm = ref({
+  name: '',
+  description: '',
+  status: 'PLANNING' as ProjectStatus,
+  health: 75,
+  startDate: '',
+  dueDate: '',
+  color: '#2563eb',
+  icon: 'layers',
 });
 
-const saveProject = async () => {
-  try {
-    if (editingProject.value) {
-      const updated = await projectStore.updateProject(editingProject.value.id, projectForm.value);
-      const index = projects.value.findIndex(p => p.id === updated.id);
-      if (index !== -1) projects.value[index] = updated;
-      toast.success('Project updated successfully');
-    } else {
-      const created = await projectStore.createProject(projectForm.value);
-      projects.value.push(created);
-      toast.success('Project created successfully');
-    }
-    closeModal();
-  } catch (err: any) {
-    const errorMsg = err.response?.data?.message || 'Failed to save project';
-    toast.error(typeof errorMsg === 'string' ? errorMsg : errorMsg[0]);
-  }
+const statusClass = (status: ProjectStatus) => ({
+  'chip-blue': status === 'ACTIVE',
+  'chip-amber': status === 'PLANNING' || status === 'ON_HOLD',
+  'chip-emerald': status === 'COMPLETED',
+  'chip-slate': status === 'ARCHIVED',
+});
+
+const pretty = (value: string) => value.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (char: string) => char.toUpperCase());
+const formatDate = (value?: string | null) => (value ? new Date(value).toLocaleDateString() : 'No date');
+
+const filteredProjects = computed(() => {
+  const query = search.value.toLowerCase();
+  return [...projects.value]
+    .filter((project) => {
+      const matchesSearch =
+        project.name.toLowerCase().includes(query) ||
+        (project.description || '').toLowerCase().includes(query);
+      const matchesStatus = !statusFilter.value || project.status === statusFilter.value;
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (sortBy.value === 'progress') {
+        return (b.progress ?? 0) - (a.progress ?? 0);
+      }
+      if (sortBy.value === 'deadline') {
+        return new Date(a.dueDate || '9999-12-31').getTime() - new Date(b.dueDate || '9999-12-31').getTime();
+      }
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+});
+
+const resetForm = () => {
+  projectForm.value = {
+    name: '',
+    description: '',
+    status: 'PLANNING',
+    health: 75,
+    startDate: '',
+    dueDate: '',
+    color: '#2563eb',
+    icon: 'layers',
+  };
+};
+
+const openCreate = () => {
+  editingProject.value = null;
+  resetForm();
+  showModal.value = true;
 };
 
 const editProject = (project: Project) => {
   editingProject.value = project;
-  projectForm.value = { name: project.name, description: project.description || '' };
-  showCreateModal.value = true;
+  projectForm.value = {
+    name: project.name,
+    description: project.description || '',
+    status: project.status,
+    health: project.health,
+    startDate: project.startDate?.slice(0, 10) || '',
+    dueDate: project.dueDate?.slice(0, 10) || '',
+    color: project.color,
+    icon: project.icon,
+  };
+  showModal.value = true;
 };
 
-const confirmDelete = async (project: Project) => {
-  if (confirm(`Delete project "${project.name}"?`)) {
-    try {
-      await projectStore.deleteProject(project.id);
-      projects.value = projects.value.filter(p => p.id !== project.id);
-      toast.success('Project deleted');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to delete project');
-    }
-  }
-};
-
-const openInviteModal = (project: Project) => {
+const openInvite = (project: Project) => {
   inviteProject.value = project;
   inviteEmail.value = '';
 };
 
-const sendInvite = async () => {
-  if (inviteProject.value && inviteEmail.value) {
-    try {
-      await projectStore.inviteUser(inviteProject.value.id, inviteEmail.value);
-      toast.success(`Invitation sent to ${inviteEmail.value}`);
-      inviteProject.value = null;
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to send invite');
+const closeModal = () => {
+  showModal.value = false;
+  editingProject.value = null;
+};
+
+const saveProject = async () => {
+  try {
+    const payload = {
+      ...projectForm.value,
+      startDate: projectForm.value.startDate || undefined,
+      dueDate: projectForm.value.dueDate || undefined,
+    };
+    if (editingProject.value) {
+      await projectStore.updateProject(editingProject.value.id, payload);
+      toast.success('Project updated');
+    } else {
+      await projectStore.createProject(payload);
+      toast.success('Project created');
     }
+    projects.value = [...projectStore.projects];
+    closeModal();
+  } catch (error: any) {
+    toast.error(error.response?.data?.message || 'Failed to save project');
   }
 };
 
-const closeModal = () => {
-  showCreateModal.value = false;
-  editingProject.value = null;
-  projectForm.value = { name: '', description: '' };
+const sendInvite = async () => {
+  if (!inviteProject.value) return;
+  try {
+    await projectStore.inviteUser(inviteProject.value.id, inviteEmail.value);
+    toast.success('Invitation sent');
+    inviteProject.value = null;
+  } catch (error: any) {
+    toast.error(error.response?.data?.message || 'Failed to send invitation');
+  }
 };
+
+const confirmDelete = async (project: Project) => {
+  if (!confirm(`Delete project "${project.name}"?`)) return;
+  try {
+    await projectStore.deleteProject(project.id);
+    projects.value = [...projectStore.projects];
+    toast.success('Project deleted');
+  } catch (error: any) {
+    toast.error(error.response?.data?.message || 'Failed to delete project');
+  }
+};
+
+onMounted(async () => {
+  projects.value = await projectStore.fetchProjects();
+});
 </script>

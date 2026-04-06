@@ -15,6 +15,8 @@ export declare class ActivityLogController {
         action: string;
         entityType: string;
         entityId: string;
+        projectId: string | null;
+        taskId: string | null;
         details: import("@prisma/client/runtime/library").JsonValue | null;
     })[]>;
     getMyLogs(req: any): Promise<({
@@ -30,6 +32,8 @@ export declare class ActivityLogController {
         action: string;
         entityType: string;
         entityId: string;
+        projectId: string | null;
+        taskId: string | null;
         details: import("@prisma/client/runtime/library").JsonValue | null;
     })[]>;
 }

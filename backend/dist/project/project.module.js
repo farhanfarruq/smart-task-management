@@ -11,12 +11,13 @@ const common_1 = require("@nestjs/common");
 const project_service_1 = require("./project.service");
 const project_controller_1 = require("./project.controller");
 const activity_log_module_1 = require("../activity-log/activity-log.module");
+const notification_module_1 = require("../notification/notification.module");
 let ProjectModule = class ProjectModule {
 };
 exports.ProjectModule = ProjectModule;
 exports.ProjectModule = ProjectModule = __decorate([
     (0, common_1.Module)({
-        imports: [activity_log_module_1.ActivityLogModule],
+        imports: [activity_log_module_1.ActivityLogModule, notification_module_1.NotificationModule],
         controllers: [project_controller_1.ProjectController],
         providers: [project_service_1.ProjectService],
     })

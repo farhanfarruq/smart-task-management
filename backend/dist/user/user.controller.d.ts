@@ -9,6 +9,10 @@ export declare class UserController {
         id: string;
         createdAt: Date;
         name: string | null;
+        avatarUrl: string | null;
+        jobTitle: string | null;
+        department: string | null;
+        bio: string | null;
         role: import(".prisma/client").$Enums.Role;
     }>;
     findAll(): Promise<{
@@ -16,6 +20,10 @@ export declare class UserController {
         id: string;
         createdAt: Date;
         name: string | null;
+        avatarUrl: string | null;
+        jobTitle: string | null;
+        department: string | null;
+        bio: string | null;
         role: import(".prisma/client").$Enums.Role;
     }[]>;
     findOne(id: string): Promise<{
@@ -23,16 +31,35 @@ export declare class UserController {
         id: string;
         createdAt: Date;
         name: string | null;
+        avatarUrl: string | null;
+        jobTitle: string | null;
+        department: string | null;
+        bio: string | null;
         role: import(".prisma/client").$Enums.Role;
     }>;
     update(id: string, updateUserDto: UpdateUserDto, req: any): Promise<{
         email: string;
         id: string;
         name: string | null;
+        avatarUrl: string | null;
+        jobTitle: string | null;
+        department: string | null;
+        bio: string | null;
         role: import(".prisma/client").$Enums.Role;
         updatedAt: Date;
     }>;
     remove(id: string, req: any): Promise<{
         message: string;
+    }>;
+    uploadAvatar(id: string, file: any, req: any): Promise<{
+        email: string;
+        id: string;
+        name: string | null;
+        avatarUrl: string | null;
+        jobTitle: string | null;
+        department: string | null;
+        bio: string | null;
+        role: import(".prisma/client").$Enums.Role;
+        updatedAt: Date;
     }>;
 }

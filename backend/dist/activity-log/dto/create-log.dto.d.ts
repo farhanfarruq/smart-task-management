@@ -3,5 +3,7 @@ export declare class CreateLogDto {
     action: string;
     entityType: string;
     entityId: string;
+    projectId?: string;
+    taskId?: string;
     details?: any;
 }

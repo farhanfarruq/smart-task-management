@@ -13,6 +13,8 @@ export class ActivityLogService {
         action: dto.action,
         entityType: dto.entityType,
         entityId: dto.entityId,
+        projectId: dto.projectId,
+        taskId: dto.taskId,
         details: dto.details || {},
       },
     });
@@ -21,10 +23,7 @@ export class ActivityLogService {
   async getProjectActivityLogs(projectId: string) {
     return this.prisma.activityLog.findMany({
       where: {
-        OR: [
-          { entityType: 'PROJECT', entityId: projectId },
-          { entityType: 'TASK', entityId: projectId }, // adjust if tasks store projectId in details
-        ],
+        OR: [{ projectId }, { entityType: 'PROJECT', entityId: projectId }],
       },
       include: {
         user: { select: { id: true, email: true, name: true } },

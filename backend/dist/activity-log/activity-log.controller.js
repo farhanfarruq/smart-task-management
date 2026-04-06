@@ -16,9 +16,7 @@ exports.ActivityLogController = void 0;
 const common_1 = require("@nestjs/common");
 const activity_log_service_1 = require("./activity-log.service");
 const roles_guard_1 = require("../auth/guards/roles.guard");
-const roles_decorator_1 = require("../common/decorators/roles.decorator");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
-const client_1 = require("@prisma/client");
 let ActivityLogController = class ActivityLogController {
     constructor(activityLogService) {
         this.activityLogService = activityLogService;
@@ -33,7 +31,6 @@ let ActivityLogController = class ActivityLogController {
 exports.ActivityLogController = ActivityLogController;
 __decorate([
     (0, common_1.Get)('project/:projectId'),
-    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
     __param(0, (0, common_1.Param)('projectId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
