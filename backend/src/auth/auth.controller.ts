@@ -25,6 +25,7 @@ export class AuthController {
     return this.authService.verifyOtp(dto);
   }
 
+  @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(@Body('refreshToken') refreshToken: string) {

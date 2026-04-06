@@ -8,7 +8,10 @@ const logging_interceptor_1 = require("./common/interceptors/logging.interceptor
 const helmet_1 = require("helmet");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
-    app.use((0, helmet_1.default)());
+    app.use((0, helmet_1.default)({
+        crossOriginResourcePolicy: { policy: "cross-origin" },
+        contentSecurityPolicy: false,
+    }));
     app.enableCors({
         origin: ['http://localhost:5173', 'http://localhost:3000'],
         credentials: true,

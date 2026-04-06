@@ -10,6 +10,8 @@ export declare class ActivityLogService {
         action: string;
         entityType: string;
         entityId: string;
+        projectId: string | null;
+        taskId: string | null;
         details: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     getProjectActivityLogs(projectId: string): Promise<({
@@ -25,6 +27,8 @@ export declare class ActivityLogService {
         action: string;
         entityType: string;
         entityId: string;
+        projectId: string | null;
+        taskId: string | null;
         details: import("@prisma/client/runtime/library").JsonValue | null;
     })[]>;
     getUserActivityLogs(userId: string): Promise<({
@@ -40,6 +44,8 @@ export declare class ActivityLogService {
         action: string;
         entityType: string;
         entityId: string;
+        projectId: string | null;
+        taskId: string | null;
         details: import("@prisma/client/runtime/library").JsonValue | null;
     })[]>;
 }

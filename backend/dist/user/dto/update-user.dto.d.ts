@@ -1,5 +1,9 @@
 import { Role } from '@prisma/client';
 export declare class UpdateUserDto {
     name?: string;
+    avatarUrl?: string;
+    jobTitle?: string;
+    department?: string;
+    bio?: string;
     role?: Role;
 }

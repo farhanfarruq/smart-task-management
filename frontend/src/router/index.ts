@@ -28,10 +28,46 @@ const router = createRouter({
       component: () => import('../views/Tasks.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/my-tasks',
+      name: 'MyTasks',
+      component: () => import('../views/MyTasks.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/notifications',
+      name: 'Notifications',
+      component: () => import('../views/Notifications.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/workload',
+      name: 'Workload',
+      component: () => import('../views/Workload.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/calendar',
+      name: 'Calendar',
+      component: () => import('../views/Calendar.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/reports',
+      name: 'Reports',
+      component: () => import('../views/Reports.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/profile',
+      name: 'Profile',
+      component: () => import('../views/ProfileSettings.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const authStore = useAuthStore();
   const isAuthenticated = authStore.isAuthenticated;
 

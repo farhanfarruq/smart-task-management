@@ -24,26 +24,29 @@ let UserService = class UserService {
                 name: dto.name || dto.email.split('@')[0],
                 role: dto.role || client_1.Role.USER,
             },
-            select: { id: true, email: true, name: true, role: true, createdAt: true },
+            select: { id: true, email: true, name: true, role: true, avatarUrl: true, jobTitle: true, department: true, bio: true, createdAt: true },
         });
     }
     async findAll() {
         return this.prisma.user.findMany({
-            select: { id: true, email: true, name: true, role: true, createdAt: true },
+            select: { id: true, email: true, name: true, role: true, avatarUrl: true, jobTitle: true, department: true, bio: true, createdAt: true },
         });
     }
     async findOne(id) {
         const user = await this.prisma.user.findUnique({
             where: { id },
-            select: { id: true, email: true, name: true, role: true, createdAt: true },
+            select: { id: true, email: true, name: true, role: true, avatarUrl: true, jobTitle: true, department: true, bio: true, createdAt: true },
         });
         if (!user)
             throw new common_1.NotFoundException('User not found');
         return user;
     }
-    async updateUser(id, dto, currentUserRole) {
+    async updateUser(id, dto, currentUserId, currentUserRole) {
         if (currentUserRole !== client_1.Role.ADMIN && dto.role) {
             throw new common_1.ForbiddenException('Only admin can change role');
+        }
+        if (currentUserRole !== client_1.Role.ADMIN && id !== currentUserId) {
+            throw new common_1.ForbiddenException('You can only update your own profile');
         }
         const user = await this.prisma.user.findUnique({ where: { id } });
         if (!user)
@@ -51,7 +54,7 @@ let UserService = class UserService {
         return this.prisma.user.update({
             where: { id },
             data: dto,
-            select: { id: true, email: true, name: true, role: true, updatedAt: true },
+            select: { id: true, email: true, name: true, role: true, avatarUrl: true, jobTitle: true, department: true, bio: true, updatedAt: true },
         });
     }
     async deleteUser(id, currentUserRole) {

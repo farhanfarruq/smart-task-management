@@ -4,7 +4,8 @@ import apiClient from '../services/api';
 import type { User, AuthResponse } from '../types';
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<User | null>(null);
+  const savedUser = localStorage.getItem('authUser');
+  const user = ref<User | null>(savedUser ? JSON.parse(savedUser) as User : null);
   const accessToken = ref<string | null>(localStorage.getItem('accessToken'));
   const refreshToken = ref<string | null>(localStorage.getItem('refreshToken'));
 
@@ -24,6 +25,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = userData;
     localStorage.setItem('accessToken', newAccessToken);
     localStorage.setItem('refreshToken', newRefreshToken);
+    localStorage.setItem('authUser', JSON.stringify(userData));
     return userData;
   }
 
@@ -33,10 +35,30 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null;
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('authUser');
   }
 
   function setUser(userData: User) {
     user.value = userData;
+    localStorage.setItem('authUser', JSON.stringify(userData));
+  }
+
+  async function updateProfile(data: Partial<User>) {
+    if (!user.value) return;
+    const response = await apiClient.patch<User>(`/users/${user.value.id}`, data);
+    setUser(response.data);
+    return response.data;
+  }
+
+  async function uploadAvatar(file: File) {
+    if (!user.value) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.patch<User>(`/users/${user.value.id}/avatar`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    setUser(response.data);
+    return response.data;
   }
 
   return {
@@ -49,5 +71,7 @@ export const useAuthStore = defineStore('auth', () => {
     verifyOtp,
     logout,
     setUser,
+    updateProfile,
+    uploadAvatar,
   };
 });

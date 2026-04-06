@@ -14,16 +14,21 @@ services:
     networks:
       - task_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U taskuser"]
+      test: ["CMD-SHELL", "pg_isready -U taskuser -d taskdb"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
     container_name: task_backend
     ports:
       - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
     depends_on:
       postgres:
         condition: service_healthy
@@ -33,16 +38,20 @@ services:
       JWT_REFRESH_SECRET: super_secret_refresh_key_change_in_production
       OTP_EXPIRY_MINUTES: 5
       PORT: 3000
-      NODE_ENV: production
     networks:
       - task_network
     restart: unless-stopped
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
     container_name: task_frontend
     ports:
       - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - backend
     environment:

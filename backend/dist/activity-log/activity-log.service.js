@@ -23,6 +23,8 @@ let ActivityLogService = class ActivityLogService {
                 action: dto.action,
                 entityType: dto.entityType,
                 entityId: dto.entityId,
+                projectId: dto.projectId,
+                taskId: dto.taskId,
                 details: dto.details || {},
             },
         });
@@ -30,10 +32,7 @@ let ActivityLogService = class ActivityLogService {
     async getProjectActivityLogs(projectId) {
         return this.prisma.activityLog.findMany({
             where: {
-                OR: [
-                    { entityType: 'PROJECT', entityId: projectId },
-                    { entityType: 'TASK', entityId: projectId },
-                ],
+                OR: [{ projectId }, { entityType: 'PROJECT', entityId: projectId }],
             },
             include: {
                 user: { select: { id: true, email: true, name: true } },

@@ -11,7 +11,6 @@ export class ActivityLogController {
   constructor(private activityLogService: ActivityLogService) {}
 
   @Get('project/:projectId')
-  @Roles(Role.ADMIN)
   getProjectLogs(@Param('projectId') projectId: string) {
     return this.activityLogService.getProjectActivityLogs(projectId);
   }
